@@ -74,11 +74,14 @@ function draw(){
     ctx.strokeStyle = "white";
     ctx.lineWidth = 3;
 
-    for(let cell of chunk.maze.cells){
+    for(let chunk of world.chunks.values()){
         
-        let x = cell.x * tileSize;
-        let y = cell.y * tileSize;
-        ctx.beginPath();
+        for(let cell of chunk.maze.cells){
+
+            let x = chunk.chunkX * mazeWidth * tileSize + cell.x * tileSize;
+            let y = chunk.chunkY * mazeHeight * tileSize + cell.y * tileSize;
+
+            ctx.beginPath();
 
         if(cell.walls.top){
             ctx.moveTo(x, y);
@@ -101,6 +104,7 @@ function draw(){
         }
 
         ctx.stroke();
+        }
     }
 
     //player
@@ -261,7 +265,39 @@ class MazeChunk{
     }
 }
 
-const chunk = new MazeChunk(0, 0);
+class World {
+    constructor(){
+        this.chunks = new Map();
+    }
+
+    getKey(chunkX, chunkY){
+        return `${chunkX},${chunkY}`;
+    }
+
+    hasChunk(chunkX, chunkY){
+        return this.chunks.has(this.getKey(chunkX, chunkY));
+    }
+
+    getChunk(chunkX, chunkY){
+        return this.chunks.get(this.getKey(chunkX, chunkY));
+    }
+
+    generateChunk(chunkX, chunkY){
+        if(this.hasChunk(chunkX, chunkY)){
+            return;
+        }
+
+        const chunk = new MazeChunk(chunkX, chunkY);
+
+        this.chunks.set(
+            this.getKey(chunkX, chunkY),
+            chunk
+        );
+    }
+}
+
+const world = new World();
+world.generateChunk(0, 0);
 
 function gameLoop(){
 
