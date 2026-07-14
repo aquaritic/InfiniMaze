@@ -18,6 +18,11 @@ const camera = {
     y: 0
 };
 
+const maze = new Maze(
+    mazeWidth,
+    mazeHeight
+);
+
 //Controls
 
 const keys = {};
@@ -71,6 +76,38 @@ function draw(){
         -camera.y
     );
 
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 3;
+
+    for(let cell of maze.cells){
+        
+        let x = cell.x * tileSize;
+        let y = cell.y * tileSize;
+        ctx.beginPath();
+
+        if(cell.walls.top){
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + tileSize, y);
+        }
+
+        if(cells.wall.right){
+            ctx.moveTo(x + tileSize, y);
+            ctx.lineTo(x + tileSize, y + tileSize);
+        }
+
+        if(cells.wall.bottom){
+            ctx.moveTo(x + tileSize, y + tileSize);
+            ctx.lineTo(x, y + tileSize);
+        }
+
+        if(cells.wall.left){
+            ctx.moveTo(x, y + tileSize);
+            ctx.lineTo(x, y);
+        }
+
+        ctx.stroke();
+    }
+
     //player
     ctx.fillStyle = "skyblue";
     ctx.fillRect(
@@ -82,6 +119,143 @@ function draw(){
 
     ctx.restore();
 
+}
+
+//Maze
+
+const tileSize = 40;
+const mazeWidth = 15;
+const mazeHeight = 15;
+
+class Cell {
+
+    constructor(x, y){
+
+        this.x = x;
+        this.y = y;
+
+        this.visited = false;
+
+        this.walls = {
+            top: true,
+            right: true,
+            bottom: true,
+            left: true
+        };
+    }
+
+}
+
+class Maze {
+
+    constructor(width, height){
+        this.width = width;
+        this.height = height;
+        this.cells = [];
+
+        for(let y = 0; y < height; y++){
+            for(let x = 0; x < width; x++){
+                this.cells.push(
+                    new Cell(x, y)
+                );
+            }
+        }
+        this.generate();
+    }
+
+    getCell(x, y){
+
+        if(x < 0 || y < 0 || x>= this.width || y >= this.height){
+            return null;
+        }
+
+        return this.cells[y * this.width + x];
+
+    }
+
+    generate(){
+
+        let stack = [];
+        let current = this.cells[0];
+        current.visited = true;
+
+        while(true){
+            let neighbors = this.getUnvisitedNeighbors(current);
+
+            if(neighbors.length > 0){
+                let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+
+                this.removeWalls(current, next);
+                stack.push(current);
+
+                current = next;
+                current.visited = true;
+            } else if (stack.length > 0){
+                current = stack.pop();
+            } else {
+                break;
+            }
+        }
+
+    getUnvisitedNeighbors(cell){
+
+        let neighbors = [];
+        let directions = [
+
+            this.getCell(
+                cell.x,
+                cell.y - 1
+            ),
+
+            this.getCell(
+                cell.x + 1,
+                cell.y
+            ),
+
+            this.getCell(
+                cell.x,
+                cell.y + 1
+            ),
+
+            this.getCell(
+                cell.x - 1,
+                cell.y
+            )
+        ];
+
+        for(let neighbor of directions){
+
+            if(neighbor && !neighbor.visited){
+                neighbors.push(neighbor);
+            }
+        }
+        return neighbors;
+    }
+
+    removeWalls(a, b){
+        let dx = a.x - b.x;
+        let dy = a.y - b.y;
+
+        if(dx === 1){
+            a.walls.left = false;
+            b.walls.right = false;
+        }
+
+        if(dx === -1){
+            a.walls.right = false;
+            b.walls.left = false;
+        }
+
+        if(dy === 1){
+            a.walls.top = false;
+            b.walls.bottom = false;
+        }
+
+        if(dy === -1){
+            a.walls.bottom = false;
+            b.walls.bottom = false;
+        }
+    }
 }
 
 function gameLoop(){
