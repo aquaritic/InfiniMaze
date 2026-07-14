@@ -18,11 +18,6 @@ const camera = {
     y: 0
 };
 
-const maze = new Maze(
-    mazeWidth,
-    mazeHeight
-);
-
 //Controls
 
 const keys = {};
@@ -55,8 +50,8 @@ if(keys["d"]){
     player.x += player.speed;
 }
 
-camera.x = player.x - canvas.width / 2;
-camera.y = player.y - canvas.height / 2;
+camera.x = player.x + player.size / 2 - canvas.width / 2;
+camera.y = player.y + player.size / 2 - canvas.height / 2;
 
 }
 
@@ -79,7 +74,7 @@ function draw(){
     ctx.strokeStyle = "white";
     ctx.lineWidth = 3;
 
-    for(let cell of maze.cells){
+    for(let cell of chunk.maze.cells){
         
         let x = cell.x * tileSize;
         let y = cell.y * tileSize;
@@ -90,17 +85,17 @@ function draw(){
             ctx.lineTo(x + tileSize, y);
         }
 
-        if(cells.wall.right){
+        if(cell.walls.right){
             ctx.moveTo(x + tileSize, y);
             ctx.lineTo(x + tileSize, y + tileSize);
         }
 
-        if(cells.wall.bottom){
+        if(cell.walls.bottom){
             ctx.moveTo(x + tileSize, y + tileSize);
             ctx.lineTo(x, y + tileSize);
         }
 
-        if(cells.wall.left){
+        if(cell.walls.left){
             ctx.moveTo(x, y + tileSize);
             ctx.lineTo(x, y);
         }
@@ -196,7 +191,7 @@ class Maze {
                 break;
             }
         }
-
+    }
     getUnvisitedNeighbors(cell){
 
         let neighbors = [];
@@ -253,10 +248,20 @@ class Maze {
 
         if(dy === -1){
             a.walls.bottom = false;
-            b.walls.bottom = false;
+            b.walls.top = false;
         }
     }
 }
+
+class MazeChunk{
+    constructor(chunkX, chunkY){
+        this.chunkX = chunkX;
+        this.chunkY = chunkY;
+        this.maze = new Maze(mazeWidth, mazeHeight);
+    }
+}
+
+const chunk = new MazeChunk(0, 0);
 
 function gameLoop(){
 
