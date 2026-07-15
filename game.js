@@ -9,7 +9,7 @@ canvas.height = window.innerHeight;
 const player = {
     x: 0,
     y: 0,
-    size: 30,
+    size: 20,
     speed: 5
 };
 
@@ -32,6 +32,43 @@ window.addEventListener("keyup", e => {
 
 //Canvas
 
+function canMove(dx, dy){
+
+    const info = world.getPlayerCell(player);
+    if(!info){
+        return true;
+    }
+    const {cell, localX, localY} = info;
+
+    const left = localX;
+    const right = localX + player.size;
+    const top = localY;
+    const bottom = localY + player.size;
+
+    if(dx < 0){
+        if(cell.walls.left && left <= wallPadding){
+            return false;
+        }
+    }
+    if(dx > 0){
+        if(cell.walls.right && right >= tileSize - wallPadding){
+            return false;
+        }
+    }
+    if(dy < 0){
+        if(cell.walls.top && top <= wallPadding){
+            return false;
+        }
+    }
+    if(dx > 0){
+        if(cell.walls.bottom && bottom >= tileSize - wallPadding){
+            return false;
+        }
+    }
+
+    return true;
+}
+
 function movePlayer(){
 
     let dx = 0;
@@ -50,9 +87,12 @@ function movePlayer(){
         dx += player.speed;
     }
 
-    player.x += dx;
-    player.y += dy;
-
+    if(canMove(dx, 0)){
+        player.x += dx;
+    }
+    if(canMove(0, dy)){
+        player.y += dy;
+    }
 }
 
 function update(){
@@ -138,6 +178,7 @@ const mazeWidth = 15;
 const mazeHeight = 15;
 const chunkWidth = mazeWidth * tileSize;
 const chunkHeight = mazeHeight * tileSize;
+const wallPadding = 4;
 
 class Cell {
 
@@ -344,6 +385,7 @@ class World {
     }
 
     getPlayerChunk(player){
+
         let chunkX = Math.floor(player.x / chunkWidth);
         let chunkY = Math.floor(player.y / chunkHeight);
 
@@ -351,9 +393,11 @@ class World {
             x: chunkX,
             y: chunkY
         };
+
     }
 
     getPlayerCell(player){
+
         const currentChunk = this.getPlayerChunk(player);
         const chunk = this.getChunk(currentChunk.x, currentChunk.y);
 
@@ -370,9 +414,10 @@ class World {
             chunk,
             cell: chunk.maze.getCell(cellX, cellY),
             cellX,
-            cellY
+            cellY,
+            localX,
+            localY
         };
-
 
     }
 
