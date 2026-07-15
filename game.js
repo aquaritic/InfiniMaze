@@ -32,41 +32,15 @@ window.addEventListener("keyup", e => {
 
 //Canvas
 
-function canMove(dx, dy){
+function rectanglesCollision(a, b){
 
-    const info = world.getPlayerCell(player);
-    if(!info){
-        return true;
-    }
-    const {cell, localX, localY} = info;
+    return(
+        a.x < b.x + b.width &&
+        a.x + a.size > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.size > b.y
+    );
 
-    const left = localX;
-    const right = localX + player.size;
-    const top = localY;
-    const bottom = localY + player.size;
-
-    if(dx < 0){
-        if(cell.walls.left && left <= wallPadding){
-            return false;
-        }
-    }
-    if(dx > 0){
-        if(cell.walls.right && right >= tileSize - wallPadding){
-            return false;
-        }
-    }
-    if(dy < 0){
-        if(cell.walls.top && top <= wallPadding){
-            return false;
-        }
-    }
-    if(dx > 0){
-        if(cell.walls.bottom && bottom >= tileSize - wallPadding){
-            return false;
-        }
-    }
-
-    return true;
 }
 
 function movePlayer(){
@@ -87,12 +61,30 @@ function movePlayer(){
         dx += player.speed;
     }
 
-    if(canMove(dx, 0)){
-        player.x += dx;
+    player.x += dx;
+    for(let wall of world.getNearbyWalls(player)){
+        if(rectanglesCollision(player, wall)){
+            if(dx > 0){
+                player.x = wall.x - player.size;
+            }
+            if(dx < 0){
+                player.x = wall.x + wall.width;
+            }
+        }
     }
-    if(canMove(0, dy)){
-        player.y += dy;
+
+    player.y += dy;
+    for(let wall of world.getNearbyWalls(player)){
+        if(rectanglesCollision(player,wall)){
+            if(dy > 0){
+                player.y = wall.y - player.size;
+            }
+            if(dy < 0){
+                player.y = wall.y + wall.height;
+            }
+        }
     }
+
 }
 
 function update(){
@@ -178,7 +170,6 @@ const mazeWidth = 15;
 const mazeHeight = 15;
 const chunkWidth = mazeWidth * tileSize;
 const chunkHeight = mazeHeight * tileSize;
-const wallPadding = 4;
 
 class Cell {
 
@@ -447,6 +438,61 @@ class World {
         }
     }
 
+    getNearbyWalls(player){
+        let walls = [];
+        const current = this.getPlayerChunk(player);
+
+        for(let y = -1;  y <= 1; y++){
+            for(let x = -1; x <= 1; x++){
+                const chunk = this.getChunk(current.x + x, current.y + y);
+            };
+            if(!chunk){
+                continue;
+            }
+
+            for(let cell of chunk.maze.cells){
+                const worldX = chunk.chunkX * chunkWidth + cell.x * tileSize;
+                const worldY = chunk.chunkY * chunkHeight + cell.y * tileSize;
+
+                if(cell.walls.top){
+                    walls.push({
+                        x: worldX,
+                        y: worldY,
+                        width: tileSize,
+                        height: 3
+                    });
+                }
+
+                if(cells.walls.bottom){
+                    walls.push({
+                        x: worldX,
+                        y: worldY + tileSize - 3,
+                        width: tileSize,
+                        height: 3
+                    });
+                }
+
+                if(cell.walls.left){
+                    walls.push({
+                        x: worldX,
+                        y: worldY,
+                        width: 3,
+                        height: tileSize
+                    });
+                }
+
+                if(cells.walls.right){
+                    walls.push({
+                        x: worldX + tileSize - 3,
+                        y: worldY,
+                        width: 3,
+                        height: tileSize
+                    });
+                }
+            }
+        }
+        return walls;
+    }
 }
 
 const world = new World();
