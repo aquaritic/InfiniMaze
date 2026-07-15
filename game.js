@@ -32,28 +32,38 @@ window.addEventListener("keyup", e => {
 
 //Canvas
 
-function update(){
+function movePlayer(){
+
+    let dx = 0;
+    let dy = 0;
 
     if(keys["w"]){
-    player.y -= player.speed;
+        dy -= player.speed;
     }
-
-    if(keys["a"]){
-    player.x -= player.speed;
-    }
-
     if(keys["s"]){
-    player.y += player.speed;
+        dy += player.speed;
+    }
+    if(keys["a"]){
+        dx -= player.speed;
+    }
+    if(keys["d"]){
+        dx += player.speed;
     }
 
-    if(keys["d"]){
-    player.x += player.speed;
-    }
+    player.x += dx;
+    player.y += dy;
+
+}
+
+function update(){
+
+    movePlayer();
 
     camera.x = player.x + player.size / 2 - canvas.width / 2;
     camera.y = player.y + player.size / 2 - canvas.height / 2;
 
     world.loadAroundPlayer(player);
+    world.unloadFarChunks(player);
 }
 
 function draw(){
@@ -343,6 +353,29 @@ class World {
         };
     }
 
+    getPlayerCell(player){
+        const currentChunk = this.getPlayerChunk(player);
+        const chunk = this.getChunk(currentChunk.x, currentChunk.y);
+
+        if(!chunk){
+            return null;
+        }
+
+        const localX = player.x - currentChunk.x * chunkWidth;
+        const localY = player.y - currentChunk.y * chunkHeight;
+        const cellX = Math.floor(localX / tileSize);
+        const cellY = Math.floor(localY / tileSize);
+
+        return{
+            chunk,
+            cell: chunk.maze.getCell(cellX, cellY),
+            cellX,
+            cellY
+        };
+
+
+    }
+
     loadAroundPlayer(player){
         let current = this.getPlayerChunk(player);
 
@@ -355,6 +388,20 @@ class World {
             }
         }
     }
+
+    unloadFarChunks(player){
+        const current = this.getPlayerChunk(player);
+
+        for(const [key, chunk] of this.chunks){
+            const dx = Math.abs(chunk.chunkX - current.x);
+            const dy = Math.abs(chunk.chunkY - current.y);
+
+            if(dx > 1 || dy > 1){
+                this.chunks.delete(key);
+            }
+        }
+    }
+
 }
 
 const world = new World();
