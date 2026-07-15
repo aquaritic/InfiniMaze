@@ -34,25 +34,26 @@ window.addEventListener("keyup", e => {
 
 function update(){
 
-if(keys["w"]){
+    if(keys["w"]){
     player.y -= player.speed;
-}
+    }
 
-if(keys["a"]){
+    if(keys["a"]){
     player.x -= player.speed;
-}
+    }
 
-if(keys["s"]){
+    if(keys["s"]){
     player.y += player.speed;
-}
+    }
 
-if(keys["d"]){
+    if(keys["d"]){
     player.x += player.speed;
-}
+    }
 
-camera.x = player.x + player.size / 2 - canvas.width / 2;
-camera.y = player.y + player.size / 2 - canvas.height / 2;
+    camera.x = player.x + player.size / 2 - canvas.width / 2;
+    camera.y = player.y + player.size / 2 - canvas.height / 2;
 
+    world.loadAroundPlayer(player);
 }
 
 function draw(){
@@ -78,8 +79,8 @@ function draw(){
         
         for(let cell of chunk.maze.cells){
 
-            let x = chunk.chunkX * mazeWidth * tileSize + cell.x * tileSize;
-            let y = chunk.chunkY * mazeHeight * tileSize + cell.y * tileSize;
+            let x = chunk.chunkX * chunkWidth + cell.x * tileSize;
+            let y = chunk.chunkY * chunkHeight + cell.y * tileSize;
 
             ctx.beginPath();
 
@@ -125,6 +126,8 @@ function draw(){
 const tileSize = 40;
 const mazeWidth = 15;
 const mazeHeight = 15;
+const chunkWidth = mazeWidth * tileSize;
+const chunkHeight = mazeHeight * tileSize;
 
 class Cell {
 
@@ -293,6 +296,64 @@ class World {
             this.getKey(chunkX, chunkY),
             chunk
         );
+
+        this.connectChunk(chunkX, chunkY);
+        this.connectChunk(chunkX - 1, chunkY);
+        this.connectChunk(chunkX, chunkY - 1);
+    }
+
+    connectChunk(chunkX, chunkY){
+        const current = this.getChunk(chunkX, chunkY);
+        if(!current){return;}
+
+        const right = this.getChunk(chunkX + 1, chunkY);
+        if(right){
+            let currentCell = current.maze.getCell(
+                mazeWidth - 1, Math.floor(Math.random() * mazeHeight)
+            );
+
+            let rightCell = right.maze.getCell(0, currentCell.y);
+
+            currentCell.walls.right = false;
+            rightCell.walls.left = false;
+        }
+
+        const bottom = this.getChunk(chunkX, chunkY + 1);
+        if(bottom){
+            let currentCell = current.maze.getCell(
+                Math.floor(Math.random() * mazeWidth),
+                mazeWidth - 1
+            );
+
+            let bottomCell = bottom.maze.getCell(currentCell.x, 0);
+
+            currentCell.walls.bottom = false;
+            bottomCell.walls.top = false;
+        }
+
+    }
+
+    getPlayerChunk(player){
+        let chunkX = Math.floor(player.x / chunkWidth);
+        let chunkY = Math.floor(player.y / chunkHeight);
+
+        return{
+            x: chunkX,
+            y: chunkY
+        };
+    }
+
+    loadAroundPlayer(player){
+        let current = this.getPlayerChunk(player);
+
+        for(let y = -1; y <= 1; y++){
+            for(let x = -1; x <= 1; x++){
+                this.generateChunk(
+                    current.x + x,
+                    current.y + y
+                );
+            }
+        }
     }
 }
 
