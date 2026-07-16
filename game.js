@@ -88,13 +88,12 @@ function movePlayer(){
 }
 
 function update(){
-
+    world.loadAroundPlayer(player);
     movePlayer();
 
     camera.x = player.x + player.size / 2 - canvas.width / 2;
     camera.y = player.y + player.size / 2 - canvas.height / 2;
 
-    world.loadAroundPlayer(player);
     world.unloadFarChunks(player);
 }
 
@@ -307,6 +306,53 @@ class MazeChunk{
         this.chunkX = chunkX;
         this.chunkY = chunkY;
         this.maze = new Maze(mazeWidth, mazeHeight);
+
+        this.walls = [];
+        this.buildWalls();
+    }
+
+    buildWalls(){
+        this.walls = [];
+        for(const cell of this.maze.cells){
+            const worldX = this.chunkX * chunkWidth + cell.x * tileSize;
+            const worldY = this.chunkY * chunkHeight + cell.y * tileSize;
+
+            if(cell.walls.top){
+                this.walls.push({
+                    x: worldX,
+                    y: worldY,
+                    width: tileSize,
+                    height: 3
+                });
+            }
+
+            if(cell.walls.bottom){
+                this.walls.push({
+                    x: worldX,
+                    y: worldY + tileSize - 3,
+                    width: tileSize,
+                    height: 3
+                });
+            }
+
+            if(cell.walls.left){
+                this.walls.push({
+                    x: worldX,
+                    y: worldY,
+                    width: 3,
+                    height: tileSize
+                });
+            }
+
+            if(cell.walls.right){
+                this.walls.push({
+                    x: worldX + tileSize - 3,
+                    y: worldY,
+                    width: 3,
+                    height: tileSize
+                });
+            }
+        }
     }
 }
 
@@ -358,19 +404,23 @@ class World {
 
             currentCell.walls.right = false;
             rightCell.walls.left = false;
+            current.buildWalls();
+            right.buildWalls();
         }
 
         const bottom = this.getChunk(chunkX, chunkY + 1);
         if(bottom){
             let currentCell = current.maze.getCell(
                 Math.floor(Math.random() * mazeWidth),
-                mazeWidth - 1
+                mazeHeight - 1
             );
 
             let bottomCell = bottom.maze.getCell(currentCell.x, 0);
 
             currentCell.walls.bottom = false;
             bottomCell.walls.top = false;
+            current.buildWalls();
+            bottom.buildWalls();
         }
 
     }
@@ -445,50 +495,12 @@ class World {
         for(let y = -1;  y <= 1; y++){
             for(let x = -1; x <= 1; x++){
                 const chunk = this.getChunk(current.x + x, current.y + y);
-            };
-            if(!chunk){
-                continue;
-            }
-
-            for(let cell of chunk.maze.cells){
-                const worldX = chunk.chunkX * chunkWidth + cell.x * tileSize;
-                const worldY = chunk.chunkY * chunkHeight + cell.y * tileSize;
-
-                if(cell.walls.top){
-                    walls.push({
-                        x: worldX,
-                        y: worldY,
-                        width: tileSize,
-                        height: 3
-                    });
+                if(!chunk){
+                    continue;
                 }
 
-                if(cells.walls.bottom){
-                    walls.push({
-                        x: worldX,
-                        y: worldY + tileSize - 3,
-                        width: tileSize,
-                        height: 3
-                    });
-                }
-
-                if(cell.walls.left){
-                    walls.push({
-                        x: worldX,
-                        y: worldY,
-                        width: 3,
-                        height: tileSize
-                    });
-                }
-
-                if(cells.walls.right){
-                    walls.push({
-                        x: worldX + tileSize - 3,
-                        y: worldY,
-                        width: 3,
-                        height: tileSize
-                    });
-                }
+                walls.push(...chunk.walls);
+                
             }
         }
         return walls;
