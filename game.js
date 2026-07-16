@@ -18,6 +18,11 @@ const camera = {
     y: 0
 };
 
+const ui = {
+    startTime: Date.now(),
+    visitedChunks: new Set()
+};
+
 //Controls
 
 const keys = {};
@@ -89,12 +94,24 @@ function movePlayer(){
 
 function update(){
     world.loadAroundPlayer(player);
+
+    const currentChunk = world.getPlayerChunk(player);
+    ui.visitedChunks.add(world.getKey(currentChunk.x, currentChunk.y));
+
     movePlayer();
 
     camera.x = player.x + player.size / 2 - canvas.width / 2;
     camera.y = player.y + player.size / 2 - canvas.height / 2;
 
     world.unloadFarChunks(player);
+}
+
+function convertTime(){
+    const seconds = Math.floor((Date.now() - ui.startTime) / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const secondsLeft = seconds % 60;
+
+    return`${minutes}:${secondsLeft.toString().padStart(2, "0")}`;
 }
 
 function draw(){
@@ -160,6 +177,22 @@ function draw(){
 
     ctx.restore();
 
+    //top bar
+    ctx.fillStyle = "rgba(20, 20, 20, .75)";
+    ctx.fillRect(0, 0, canvas.width, 40);
+
+    ctx.fillStyle = "white";
+    ctx.font = "18px papyrus";
+    ctx.textBaseline = "middle";
+
+    ctx.fillText(`Chunks: ${ui.visitedChunks.size}`, 20, 20);
+    ctx.textAlign = "center";
+    ctx.fillText(`Elapsed ${convertTime()}`, canvas.width / 2, 20);
+
+    ctx.textAlign = "right";
+    const current = world.getPlayerChunk(player);
+    ctx.fillText(`(${current.x}, ${current.y})`, canvas.width - 20, 20);
+    ctx.textAlign = "left";
 }
 
 //Maze
