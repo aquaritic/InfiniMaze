@@ -23,6 +23,11 @@ const ui = {
     visitedChunks: new Set()
 };
 
+const worldState = {
+    lastChunkX: null,
+    lastChunkY: null
+};
+
 //Controls
 
 const keys = {};
@@ -93,10 +98,21 @@ function movePlayer(){
 }
 
 function update(){
-    world.loadAroundPlayer(player);
 
     const currentChunk = world.getPlayerChunk(player);
-    ui.visitedChunks.add(world.getKey(currentChunk.x, currentChunk.y));
+    if(
+        currentChunk.x !== worldState.lastChunkX ||
+        currentChunk.y !== worldState.lastChunkY
+    ){
+        world.loadAroundPlayer(player);
+        world.unloadFarChunks(player);
+        worldState.lastChunkX = currentChunk.x;
+        worldState.lastChunkY = currentChunk.y;
+    }
+
+    ui.visitedChunks.add(
+        world.getKey(currentChunk.x, currentChunk.y)
+    );
 
     movePlayer();
 
@@ -131,8 +147,6 @@ function draw(){
         -camera.y
     );
 
-    ctx.shadowColor = "#768A75";
-    ctx.shadowBlur = 5;
     ctx.strokeStyle = "#044900";
     ctx.lineWidth = 3;
 
