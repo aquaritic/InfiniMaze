@@ -100,8 +100,8 @@ function update(){
 
     movePlayer();
 
-    camera.x = (player.x + player.size / 2 - canvas.width / 2) * .95;
-    camera.y = (player.y + player.size / 2 - canvas.height / 2) * .95;
+    camera.x = (player.x + player.size / 2 - canvas.width / 2);
+    camera.y = (player.y + player.size / 2 - canvas.height / 2);
 
     world.unloadFarChunks(player);
 }
@@ -116,7 +116,7 @@ function convertTime(){
 
 function draw(){
 
-    ctx.fillStyle = "#996515";
+    ctx.fillStyle = "#2e1c01";
     ctx.fillRect(
         0,
         0,
@@ -133,7 +133,7 @@ function draw(){
 
     ctx.shadowColor = "#768A75";
     ctx.shadowBlur = 5;
-    ctx.strokeStyle = "#71c26d";
+    ctx.strokeStyle = "#044900";
     ctx.lineWidth = 3;
 
     for(let chunk of world.chunks.values()){
