@@ -170,9 +170,10 @@ function drawLighting(){
         lighting.radius
     );
     light.addColorStop(0, "rgba(0, 0, 0, 0)");
+    light.addColorStop(.5, "rgba(0, 0, 0, .25)");
+    light.addColorStop(.75, "rgba(0, 0, 0, .75)");
     light.addColorStop(1, "rgba(0, 0, 0, 1)");
 
-    ctx.globalCompositeOperation = "destination-out";
     ctx.fillStyle = light;
     ctx.beginPath();
     ctx.arc(
