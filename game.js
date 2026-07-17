@@ -4,23 +4,37 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-//Objects
+//Objects/other
 
 const player = {
     x: 0,
     y: 0,
+    targetX: 0,
+    targetY: 0,
+    drawX: 0,
+    drawY: 0,
     size: 20,
     speed: 5
 };
 
 const camera = {
     x: 0,
-    y: 0
+    y: 0,
+
+    targetX: 0,
+    targetY: 0,
+    buffer: .05
 };
 
 const ui = {
     startTime: Date.now(),
     visitedChunks: new Set()
+};
+
+const lighting = {
+    radius: 250,
+    darkness: .8,
+    flicker: 0
 };
 
 const worldState = {
@@ -95,6 +109,9 @@ function movePlayer(){
         }
     }
 
+
+    player.targetX = player.x;
+    player.targetY = player.y;
 }
 
 function update(){
@@ -115,11 +132,20 @@ function update(){
     );
 
     movePlayer();
+    player.drawX += (player.targetX - player.drawX) * .2;
+    player.drawY += (player.targetY - player.drawY) * .2;
 
-    camera.x = (player.x + player.size / 2 - canvas.width / 2);
-    camera.y = (player.y + player.size / 2 - canvas.height / 2);
+    camera.targetX = player.x + player.size / 2 - canvas.width / 2;
+    camera.targetY = player.y + player.size / 2 - canvas.height / 2;
+    camera.x += (camera.targetX - camera.x) * camera.buffer;
+    camera.y += (camera.targetY - camera.y) * camera.buffer;
 
     world.unloadFarChunks(player);
+    for(let chunk of world.chunks.values()){
+        if(chunk.opacity < 1){
+            chunk.opacity += .01
+        }
+    }
 }
 
 function convertTime(){
@@ -128,6 +154,36 @@ function convertTime(){
     const secondsLeft = seconds % 60;
 
     return`${minutes}:${secondsLeft.toString().padStart(2, "0")}`;
+}
+
+function drawLighting(){
+    ctx.save();
+    ctx.fillStyle = `rgba(0, 0, 0, ${lighting.darkness}`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const light = ctx.createRadialGradient(
+        canvas.width/2, 
+        canvas.height / 2,
+        20,
+        canvas.width / 2,
+        canvas.height / 2,
+        lighting.radius
+    );
+    light.addColorStop(0, "rgba(0, 0, 0, 0)");
+    light.addColorStop(1, "rgba(0, 0, 0, 1)");
+
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.fillStyle = light;
+    ctx.beginPath();
+    ctx.arc(
+        canvas.width / 2,
+        canvas.height / 2,
+        lighting.radius,
+        0,
+        Math.PI * 2
+    );
+    ctx.fill();
+    ctx.restore();
 }
 
 function draw(){
@@ -151,6 +207,7 @@ function draw(){
     ctx.lineWidth = 3;
 
     for(let chunk of world.chunks.values()){
+        ctx.globalAlpha = chunk.opacity;
         
         for(let cell of chunk.maze.cells){
 
@@ -187,15 +244,17 @@ function draw(){
     ctx.fillStyle = "skyblue";
     ctx.beginPath();
     ctx.arc(
-        player.x + player.size / 2,
-        player.y + player.size / 2,
+        player.drawX + player.size / 2,
+        player.drawY + player.size / 2,
         player.size / 2,
         0,
         Math.PI * 2
     );
     ctx.fill();
 
+    ctx.globalAlpha = 1;
     ctx.restore();
+    drawLighting();
 
     //top bar
     ctx.fillStyle = "rgba(20, 20, 20, .75)";
@@ -358,6 +417,7 @@ class MazeChunk{
     constructor(chunkX, chunkY){
         this.chunkX = chunkX;
         this.chunkY = chunkY;
+        this.opacity = 0;
         this.maze = new Maze(mazeWidth, mazeHeight);
 
         this.walls = [];
