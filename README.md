@@ -16,6 +16,10 @@ Insipiration:
 
 I loved playing maze games, as I stated earlier, so I created an endless one.
 
+AI Usage:
+
+I utilized ChatGPT to assist with debugging and optimization, as well as understanding how to create some parts of my website. I abided by Hack Club's standards and made sure my code did not exceed over 30% AI.
+
 Theme:
 
 This project belongs to the endless theme because the "map" of mazes is procedurally generated, it has no boundary or end, keep playing and more mazes get generated with no limit. The mazes are randomly generated, but openings are always created, meaning you will never escape with constant, procedural, never-ending maze generation.
